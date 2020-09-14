@@ -14,19 +14,19 @@ class Company {
             let searchValues = [];
 
             if (queryParams.hasOwnProperty("search")) {
-                searchTerms.push(`(handle ILIKE '%$${idx}%' OR name ILIKE '%$${idx}%')`);
-                searchValues.push(queryParams.search);
+                searchTerms.push(`(handle ILIKE $${idx} OR name ILIKE $${idx})`);
+                searchValues.push('%'+queryParams.search+'%');
                 idx += 1;
             }
 
             if (queryParams.hasOwnProperty("min_employees")) {
-                searchTerm.push(`num_employees > $${idx}`)
+                searchTerms.push(`num_employees > $${idx}`)
                 searchValues.push(queryParams.min_employees);
                 idx += 1;
             }
 
             if (queryParams.hasOwnProperty("max_employees")) {
-                searchTerm.push(`num_employees < $${idx}`)
+                searchTerms.push(`num_employees < $${idx}`)
                 searchValues.push(queryParams.max_employees);
                 idx += 1;
             }
@@ -47,12 +47,12 @@ class Company {
         }   
     }
 
-    static async new({handle, name, num_employees, description, logo_url}) {
+    static async new(companyParams) {
         const result = await db.query(`
             INSERT INTO companies (handle, name, num_employees, description, logo_url)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING handle, name, num_employees, description, logo_url`,
-            [handle, name, num_employees, description, logo_url]);
+            [companyParams.handle, companyParams.name, companyParams.num_employees, companyParams.description, companyParams.logo_url]);
         return result.rows[0]
     }
 
@@ -74,10 +74,9 @@ class Company {
     static async delete(handle) {
         const result = await db.query(`
             DELETE FROM companies
-            WHERE handle = $1`,
+            WHERE handle = $1
+            RETURNING handle`,
             [handle]);
-        // Need to check what result will contain on this
-        console.log("Delete Company:", result)
         return result.rows[0];
     }
 }
