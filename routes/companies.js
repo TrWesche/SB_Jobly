@@ -24,7 +24,6 @@ router.get("/", async (req, res, next) => {
         } else {
             companyData = await Company.all(null);
         }
-
         return res.json({companies: companyData});
     } catch (error) {
         return next(error)
@@ -34,16 +33,18 @@ router.get("/", async (req, res, next) => {
 router.post("/", async(req, res, next) => {
     try {
         const validate = jsonschema.validate(req.body, createSchema);
-
         if (!validate.valid) {
             //Collect all the errors in an array and throw
-            const listOfErrors = result.errors.map(e => e.stack);
+            const listOfErrors = validate.errors.map(e => e.stack);
             throw new ExpressError(`Unable to create a new Company: ${listOfErrors}`, 400)
         }
 
         const companyData = await Company.new(req.body);
         return res.json({company: companyData})
     } catch (error) {
+        if (error.code === '23505') {
+            return next(new ExpressError(`Unable to create a new Company: Handle Already Exists`, 400))
+        }
         return next(error)
     }
 })
@@ -62,14 +63,14 @@ router.patch("/:handle", async(req, res, next) => {
     try {
         // Validate company handle
         const oldData = await Company.get(req.params.handle);
-        if (Object.keys(oldData).length === 0) {
+        if (!oldData) {
             throw new ExpressError(`Unable to find target company to update`, 400)
         }
 
         // Validate request data
         const validate = jsonschema.validate(req.body, createSchema);
         if (!validate.valid) {
-            const listOfErrors = result.errors.map(e => e.stack);
+            const listOfErrors = validate.errors.map(e => e.stack);
             throw new ExpressError(`Unable to update Company: ${listOfErrors}`, 400)
         }
 
@@ -77,7 +78,7 @@ router.patch("/:handle", async(req, res, next) => {
         let itemsList = {};
         const newKeys = Object.keys(req.body);
         newKeys.map(key => {
-            if((req.body[key] && oldData[key]) && (req.body[key] != oldData[key])) {
+            if((req.body.hasOwnProperty(key) && oldData.hasOwnProperty(key)) && (req.body[key] != oldData[key])) {
                 itemsList[key] = req.body[key];
             }
         })
