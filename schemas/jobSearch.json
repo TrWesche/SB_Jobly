@@ -1,0 +1,50 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "search": "micro",
+            "min_salary": "100000",
+            "min_equity": "0.005"
+        }
+    ],
+    "properties": {
+        "search": {
+            "$id": "#/properties/search",
+            "type": "string",
+            "title": "The search schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "micro"
+            ]
+        },
+        "min_salary": {
+            "$id": "#/properties/min_salary",
+            "type": "string",
+            "title": "The min_salary schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "0",
+            "examples": [
+                "75000"
+            ],
+            "pattern": "^[0-9]+$"
+        },
+        "min_equity": {
+            "$id": "#/properties/min_equity",
+            "type": "string",
+            "title": "The min_equity schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "0",
+            "examples": [
+                "0.25"
+            ],
+            "pattern": "^[0-1].[0-9]{1,4}$"
+        }
+    },
+    "additionalProperties": true
+}

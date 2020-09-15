@@ -11,8 +11,8 @@ CREATE TABLE jobs (
     title text NOT NULL,
     salary float NOT NULL,
     equity float NOT NULL,
-    company_handle text NOT NULL references companies,
-    date_posted timestamp with time zone
+    company_handle text NOT NULL REFERENCES companies ON DELETE CASCADE,
+    date_posted date
 );
 
 CREATE TABLE users (

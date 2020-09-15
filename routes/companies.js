@@ -4,7 +4,7 @@ const Company = require("../models/company");
 const jsonschema = require("jsonschema");
 const searchSchema = require("../schemas/companySearch.json");
 const createSchema = require("../schemas/companyNew.json");
-const e = require("express");
+const updateSchema = require("../schemas/companyUpdate.json")
 
 const router = new express.Router()
 
@@ -68,7 +68,7 @@ router.patch("/:handle", async(req, res, next) => {
         }
 
         // Validate request data
-        const validate = jsonschema.validate(req.body, createSchema);
+        const validate = jsonschema.validate(req.body, updateSchema);
         if (!validate.valid) {
             const listOfErrors = validate.errors.map(e => e.stack);
             throw new ExpressError(`Unable to update Company: ${listOfErrors}`, 400)
