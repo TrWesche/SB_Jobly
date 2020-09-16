@@ -67,6 +67,17 @@ describe("Test Company class", () => {
         expect(result).toEqual(testCompany);
     })
 
+    test("Can Get Company by Handle with Jobs", async () => {
+        const result = await Company.getJobs(testCompany.handle);
+        expect(result).toEqual({
+            handle: testCompany.handle,
+            name: testCompany.name,
+            num_employees: testCompany.num_employees,
+            description: testCompany.description,
+            logo_url: testCompany.logo_url,
+            jobs: [null]});
+    })
+
     test("Can Update Company", async () => {
         const update = {
             handle: testCompany.handle,

@@ -65,12 +65,17 @@ class Company {
         return result.rows[0];
     }
 
-    // ********* FUTURE GET FUNCTION WHICH ADDS A "JOBS" JSON OBJECT TO THE QUERY RESULT ********
-    // SELECT handle, name, num_employees, description, logo_url, json_agg(jobs) AS jobs
-    // FROM companies
-    // JOIN jobs
-    // ON companies.handle = jobs.company_handle
-    // GROUP BY handle;
+    static async getJobs(handle) {
+        const result = await db.query(`
+            SELECT handle, name, num_employees, description, logo_url, json_agg(jobs) AS jobs
+            FROM companies
+            FULL OUTER JOIN jobs
+            ON companies.handle = jobs.company_handle
+            GROUP BY handle
+            HAVING handle = $1`, 
+            [handle]);
+        return result.rows[0];
+    }
 
     static async update(handle, updateItems) {
         const { query, values } = sqlForPartialUpdate("companies", updateItems, "handle", handle);

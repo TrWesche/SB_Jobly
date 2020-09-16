@@ -104,7 +104,14 @@ describe("GET /api/companies/:handle", () => {
     test("Can Get One Company By Handle", async () => {
         const res = await request(app).get(`/api/companies/${testCompany.handle}`);
         expect(res.statusCode).toBe(200);
-        expect(res.body).toEqual({company: testCompany});
+        expect(res.body).toEqual({company: {
+            handle: testCompany.handle,
+            name: testCompany.name,
+            num_employees: testCompany.num_employees,
+            description: testCompany.description,
+            logo_url: testCompany.logo_url,
+            jobs: [null]}
+        });
     })
 
 });
@@ -154,6 +161,7 @@ describe("PATCH /api/companies/:handle", () => {
         expect(res.statusCode).toBe(400);
     })
 });
+
 
 describe("DELETE /api/companies/:handle", () => {
     test("Can Delete Company By Handle", async () => {

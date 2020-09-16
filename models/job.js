@@ -20,13 +20,13 @@ class Job {
             }
 
             if (queryParams.hasOwnProperty("min_salary")) {
-                searchTerms.push(`salary > $${idx}`)
+                searchTerms.push(`salary >= $${idx}`)
                 searchValues.push(queryParams.min_salary);
                 idx += 1;
             }
 
             if (queryParams.hasOwnProperty("min_equity")) {
-                searchTerms.push(`equity > $${idx}`)
+                searchTerms.push(`equity >= $${idx}`)
                 searchValues.push(queryParams.min_equity);
                 idx += 1;
             }
@@ -72,7 +72,7 @@ class Job {
         const result = await db.query(`
             SELECT id, title, salary, equity, date_posted, to_json(companies) AS company
             FROM jobs
-            JOIN companies
+            FULL OUTER JOIN companies
             ON jobs.company_handle = companies.handle
             WHERE id = $1`, 
             [id]);
