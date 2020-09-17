@@ -1,0 +1,117 @@
+/** User class for Job.ly */
+
+const sqlForPartialUpdate = require("../helpers/partialUpdate")
+const db = require("../db")
+
+const bcrypt = require("bcrypt")
+const { BCRYPT_WORK_FACTOR } = require("../config");
+
+
+class User {
+
+    // ╔═══╗╔═══╗╔═══╗╔═══╗╔════╗╔═══╗
+    // ║╔═╗║║╔═╗║║╔══╝║╔═╗║║╔╗╔╗║║╔══╝
+    // ║║ ╚╝║╚═╝║║╚══╗║║ ║║╚╝║║╚╝║╚══╗
+    // ║║ ╔╗║╔╗╔╝║╔══╝║╚═╝║  ║║  ║╔══╝
+    // ║╚═╝║║║║╚╗║╚══╗║╔═╗║ ╔╝╚╗ ║╚══╗
+    // ╚═══╝╚╝╚═╝╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
+              
+    static async new(bodyParams) {
+        console.log(bodyParams)
+        const hashedPassword = await bcrypt.hash(bodyParams.password, BCRYPT_WORK_FACTOR)
+        const result = await db.query(`
+            INSERT INTO users (username, password, first_name, last_name, email, photo_url, is_admin)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING username, password, first_name, last_name, email, photo_url, is_admin`,
+            [bodyParams.username, hashedPassword, bodyParams.first_name, bodyParams.last_name, bodyParams.email, bodyParams.photo_url, bodyParams.is_admin]);
+        return result.rows[0]
+    }
+
+    // ╔═══╗╔═══╗╔═══╗╔═══╗
+    // ║╔═╗║║╔══╝║╔═╗║╚╗╔╗║
+    // ║╚═╝║║╚══╗║║ ║║ ║║║║
+    // ║╔╗╔╝║╔══╝║╚═╝║ ║║║║
+    // ║║║╚╗║╚══╗║╔═╗║╔╝╚╝║
+    // ╚╝╚═╝╚═══╝╚╝ ╚╝╚═══╝   
+
+    static async all() {
+        const result = await db.query(`
+            SELECT username, first_name, last_name, email
+            FROM users
+            ORDER BY username DESC`);
+        return result.rows;
+    }
+
+    static async get(username) {
+        const result = await db.query(`
+            SELECT username, first_name, last_name, email, photo_url
+            FROM users
+            WHERE username = $1`, 
+            [username]);
+        return result.rows[0];
+    }
+
+
+    // ╔╗ ╔╗╔═══╗╔═══╗╔═══╗╔════╗╔═══╗
+    // ║║ ║║║╔═╗║╚╗╔╗║║╔═╗║║╔╗╔╗║║╔══╝
+    // ║║ ║║║╚═╝║ ║║║║║║ ║║╚╝║║╚╝║╚══╗
+    // ║║ ║║║╔══╝ ║║║║║╚═╝║  ║║  ║╔══╝
+    // ║╚═╝║║║   ╔╝╚╝║║╔═╗║ ╔╝╚╗ ║╚══╗
+    // ╚═══╝╚╝   ╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
+
+    static async update(username, updateItems) {
+        const { query, values } = sqlForPartialUpdate("users", updateItems, "username", username);
+        const result = await db.query(query, values);
+        const returnObj = {
+            username: result.rows[0].username,
+            first_name: result.rows[0].first_name,
+            last_name: result.rows[0].last_name,
+            email: result.rows[0].email,
+            photo_url: result.rows[0].photo_url
+        }
+        return returnObj;
+    }
+
+
+    // ╔═══╗╔═══╗╔╗   ╔═══╗╔════╗╔═══╗
+    // ╚╗╔╗║║╔══╝║║   ║╔══╝║╔╗╔╗║║╔══╝
+    //  ║║║║║╚══╗║║   ║╚══╗╚╝║║╚╝║╚══╗
+    //  ║║║║║╔══╝║║ ╔╗║╔══╝  ║║  ║╔══╝
+    // ╔╝╚╝║║╚══╗║╚═╝║║╚══╗ ╔╝╚╗ ║╚══╗
+    // ╚═══╝╚═══╝╚═══╝╚═══╝ ╚══╝ ╚═══╝
+
+    static async delete(username) {
+        const result = await db.query(`
+            DELETE FROM users
+            WHERE username = $1
+            RETURNING username`,
+            [username]);
+        return result.rows[0];
+    }
+
+
+    // ╔═══╗╔═══╗╔═══╗  
+    // ║╔═╗║╚╗╔╗║╚╗╔╗║  
+    // ║║ ║║ ║║║║ ║║║║  
+    // ║╚═╝║ ║║║║ ║║║║  
+    // ║╔═╗║╔╝╚╝║╔╝╚╝║╔╗
+    // ╚╝ ╚╝╚═══╝╚═══╝╚╝
+    
+    // AUTHENTICATE
+    static async authenticate(bodyParams) {
+        const result = await db.query(`
+            SELECT username, password
+            FROM users
+            WHERE username = $1`,
+            [bodyParams.username]);
+    
+        if (!result.rows[0]) {
+            return false
+        }
+
+        const dbPassword = result.rows[0].password;
+        return bcrypt.compare(bodyParams.password, dbPassword)
+    }
+}
+
+module.exports = User

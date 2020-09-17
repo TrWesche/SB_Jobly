@@ -49,13 +49,13 @@ class Job {
         }   
     }
 
-    static async new(jobParams) {
-        const date_posted = (jobParams.date_posted) ? jobParams.date_posted : new Date().toDateString();
+    static async new(bodyParams) {
+        const date_posted = (bodyParams.date_posted) ? bodyParams.date_posted : new Date().toDateString();
         const result = await db.query(`
             INSERT INTO jobs (title, salary, equity, company_handle, date_posted)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id, title, salary, equity, company_handle, date_posted`,
-            [jobParams.title, jobParams.salary, jobParams.equity, jobParams.company_handle, date_posted]);
+            [bodyParams.title, bodyParams.salary, bodyParams.equity, bodyParams.company_handle, date_posted]);
         return result.rows[0]
     }
 
