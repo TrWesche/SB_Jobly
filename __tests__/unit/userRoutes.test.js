@@ -1,35 +1,37 @@
 process.env.NODE_ENV = "test";
 
 const request = require("supertest");
+const jwt = require("jsonwebtoken")
 const app = require("../../app");
 const db = require("../../db");
 const User = require("../../models/user");
 
-let testUser;
-let otherUser;
+let testUser = {
+    username: "TestMaster",
+    password: "password",
+    first_name: "Master",
+    last_name: "Test",
+    email: "masterT@test.com",
+    photo_url: "http://testimageplace.com/123xyz",
+    is_admin: true
+};
+
+let otherUser = {
+    username: "LittleTesty",
+    password: "password",
+    first_name: "Testy",
+    last_name: "Little",
+    email: "LTesty@test.com",
+    photo_url: "http://testimageplace.com/abcd1234",
+    is_admin: false
+};
+
 let createUser;
 
 beforeEach(async function () {
     await db.query("DELETE FROM users");
-    testUser = await User.new({
-        username: "TestMaster",
-        password: "password",
-        first_name: "Master",
-        last_name: "Test",
-        email: "masterT@test.com",
-        photo_url: "http://testimageplace.com/123xyz",
-        is_admin: true
-    });
-
-    otherUser = await User.new({
-        username: "LittleTesty",
-        password: "password",
-        first_name: "Testy",
-        last_name: "Little",
-        email: "LTesty@test.com",
-        photo_url: "http://testimageplace.com/abcd1234",
-        is_admin: false
-    });
+    await User.new(testUser);
+    await User.new(otherUser);
 
     createUser = {
         username: "ItsaMeNewUser",
@@ -60,16 +62,11 @@ describe("POST /api/users", () => {
         const res = await request(app).post('/api/users').send(createUser);
 
         expect(res.statusCode).toBe(200);
-        expect(res.body).toEqual({user: {
+        expect(jwt.decode(res.body.token)).toEqual({
             username: createUser.username,
-            password: expect.any(String),
-            first_name: createUser.first_name,
-            last_name: createUser.last_name,
-            email: createUser.email,
-            photo_url: createUser.photo_url,
-            is_admin: createUser.is_admin
-            }
-        })
+            is_admin: createUser.is_admin,
+            iat: expect.any(Number)
+        });
     })
 
     test("Fails Validation on Missing Parameter", async () => {

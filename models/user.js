@@ -21,7 +21,8 @@ class User {
         const result = await db.query(`
             INSERT INTO users (username, password, first_name, last_name, email, photo_url, is_admin)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING username, password, first_name, last_name, email, photo_url, is_admin`,
+            RETURNING username, is_admin`,
+            // RETURNING username, password, first_name, last_name, email, photo_url, is_admin,
             [bodyParams.username, hashedPassword, bodyParams.first_name, bodyParams.last_name, bodyParams.email, bodyParams.photo_url, bodyParams.is_admin]);
         return result.rows[0]
     }
@@ -108,17 +109,23 @@ class User {
     // AUTHENTICATE
     static async authenticate(bodyParams) {
         const result = await db.query(`
-            SELECT username, password
+            SELECT username, password, is_admin
             FROM users
             WHERE username = $1`,
             [bodyParams.username]);
     
-        if (!result.rows[0]) {
-            return false
+        console.log(result.rows[0]);
+
+        if (result.rows[0]) {
+            const dbPassword = result.rows[0].password;
+            const valid = await bcrypt.compare(bodyParams.password, dbPassword)
+    
+            if (valid) {
+                return {username: result.rows[0].username, is_admin: result.rows[0].is_admin}
+            }
         }
 
-        const dbPassword = result.rows[0].password;
-        return bcrypt.compare(bodyParams.password, dbPassword)
+        return false
     }
 }
 

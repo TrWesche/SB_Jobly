@@ -3,53 +3,77 @@ process.env.NODE_ENV = "test";
 const db = require("../../db")
 const User = require("../../models/user")
 
-let testUser;
-let otherUser;
+
+let testUser = {
+    username: "TestMaster",
+    password: "password",
+    first_name: "Master",
+    last_name: "Test",
+    email: "masterT@test.com",
+    photo_url: "http://testimageplace.com/123xyz",
+    is_admin: true
+};
+
+let otherUser = {
+    username: "LittleTesty",
+    password: "password",
+    first_name: "Testy",
+    last_name: "Little",
+    email: "LTesty@test.com",
+    photo_url: "http://testimageplace.com/abcd1234",
+    is_admin: false
+};
+
+let createUser = {
+    username: "ItsaMeNewUser",
+    password: "password",
+    first_name: "Mario",
+    last_name: "Luigi",
+    email: "MarL@test.com",
+    photo_url: "http://testimageplace.com/abcd1234",
+    is_admin: false
+};
 
 describe("Test User class", () => {
     beforeEach(async function () {
         await db.query("DELETE FROM users");
-        testUser = await User.new({
-            username: "TestMaster",
-            password: "password",
-            first_name: "Master",
-            last_name: "Test",
-            email: "masterT@test.com",
-            photo_url: "http://testimageplace.com/123xyz",
-            is_admin: true
-        });
-
-        otherUser = await User.new({
-            username: "LittleTesty",
-            password: "password",
-            first_name: "Testy",
-            last_name: "Little",
-            email: "LTesty@test.com",
-            photo_url: "http://testimageplace.com/abcd1234",
-            is_admin: false
-        });
+        await User.new(testUser);
+        await User.new(otherUser);
     });
 
     afterAll(async function() {
         await db.end();
     });
 
-    test("Can Create New User", async () => {
-        const createUser1 = await User.new({
-            username: "ItsaMeNewUser",
-            password: "password",
-            first_name: "Mario",
-            last_name: "Luigi",
-            email: "MarL@test.com",
-            photo_url: "http://testimageplace.com/abcd1234",
-            is_admin: false
-        });
+    // ╔═══╗╔═══╗╔═══╗╔═══╗╔════╗╔═══╗
+    // ║╔═╗║║╔═╗║║╔══╝║╔═╗║║╔╗╔╗║║╔══╝
+    // ║║ ╚╝║╚═╝║║╚══╗║║ ║║╚╝║║╚╝║╚══╗
+    // ║║ ╔╗║╔╗╔╝║╔══╝║╚═╝║  ║║  ║╔══╝
+    // ║╚═╝║║║║╚╗║╚══╗║╔═╗║ ╔╝╚╗ ║╚══╗
+    // ╚═══╝╚╝╚═╝╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
 
-        expect(createUser1.username).toBe("ItsaMeNewUser");
-        expect(createUser1.first_name).toBe("Mario");
-        expect(createUser1.password).not.toBe("password");
-        expect(createUser1.password).toEqual(expect.any(String));
+    test("Can Create New User", async () => {
+        const createRes = await User.new(createUser);
+
+        // expect(jwt.decode(createRes.token)).toEqual({
+        //     username: createUser.username,
+        //     is_admin: createUser.is_admin,
+        //     iat: expect.any(Number)
+        // });
+
+        expect(createRes).toEqual({
+            username: createUser.username,
+            is_admin: createUser.is_admin
+        });
     })
+
+
+    // ╔═══╗╔═══╗╔═══╗╔═══╗
+    // ║╔═╗║║╔══╝║╔═╗║╚╗╔╗║
+    // ║╚═╝║║╚══╗║║ ║║ ║║║║
+    // ║╔╗╔╝║╔══╝║╚═╝║ ║║║║
+    // ║║║╚╗║╚══╗║╔═╗║╔╝╚╝║
+    // ╚╝╚═╝╚═══╝╚╝ ╚╝╚═══╝   
 
     test("Can Get All Users", async () => {
         const result = await User.all();
@@ -69,7 +93,6 @@ describe("Test User class", () => {
         ]);
     })
 
-
     test("Can Get User by Username", async () => {
         const result = await User.get(testUser.username);
         expect(result).toEqual(
@@ -83,21 +106,30 @@ describe("Test User class", () => {
         );
     })
 
-    // Route should be setup to handle & filter changing password
+
+    // ╔╗ ╔╗╔═══╗╔═══╗╔═══╗╔════╗╔═══╗
+    // ║║ ║║║╔═╗║╚╗╔╗║║╔═╗║║╔╗╔╗║║╔══╝
+    // ║║ ║║║╚═╝║ ║║║║║║ ║║╚╝║║╚╝║╚══╗
+    // ║║ ║║║╔══╝ ║║║║║╚═╝║  ║║  ║╔══╝
+    // ║╚═╝║║║   ╔╝╚╝║║╔═╗║ ╔╝╚╗ ║╚══╗
+    // ╚═══╝╚╝   ╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
+
     test("Can Update User", async () => {
-        const update = {
-            username: testUser.username,
-            password: "password",
-            first_name: "MrUpdate",
-            last_name: testUser.last_name,
-            email: testUser.email,
-            photo_url: testUser.photo_url,
-            is_admin: testUser.is_admin
-        }
-        const result = await User.update(testUser.username, update);
+        testUser.first_name = "MrUpdate",
+        testUser.password = "password"
+
+        const result = await User.update(testUser.username, testUser);
         expect(result.first_name).toBe("MrUpdate");
     })
 
+
+    // ╔═══╗╔═══╗╔╗   ╔═══╗╔════╗╔═══╗
+    // ╚╗╔╗║║╔══╝║║   ║╔══╝║╔╗╔╗║║╔══╝
+    //  ║║║║║╚══╗║║   ║╚══╗╚╝║║╚╝║╚══╗
+    //  ║║║║║╔══╝║║ ╔╗║╔══╝  ║║  ║╔══╝
+    // ╔╝╚╝║║╚══╗║╚═╝║║╚══╗ ╔╝╚╗ ║╚══╗
+    // ╚═══╝╚═══╝╚═══╝╚═══╝ ╚══╝ ╚═══╝
+    
     test("Can Delete User", async() => {
         const result = await User.delete(testUser.username);
         expect(result.username).toBe(testUser.username);

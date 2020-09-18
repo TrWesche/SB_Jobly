@@ -1,5 +1,8 @@
 const express = require("express");
 const ExpressError = require("../helpers/expressError");
+const jwt = require("jsonwebtoken");
+const { SECRET_KEY } = require("../config");
+
 const User = require("../models/user");
 const jsonschema = require("jsonschema");
 const createSchema = require("../schemas/userNew.json");
@@ -25,7 +28,14 @@ router.post("/", async(req, res, next) => {
         }
 
         const queryData = await User.new(req.body);
-        return res.json({user: queryData})
+
+        // Return JSON Web Token
+        const token = jwt.sign(queryData, SECRET_KEY);
+        console.log(token.username)
+        res.cookie("uvert", token, {httpOnly: true})
+        return res.json({ "token": token })
+
+        // return res.json({user: queryData})
     } catch (error) {
         if (error.code === '23505') {
             return next(new ExpressError(`Unable to create a new User: Username/Email Taken`, 400))
