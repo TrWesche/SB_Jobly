@@ -179,9 +179,6 @@ describe("GET /api/jobs/:id", () => {
 describe("PATCH /api/jobs/:id", () => {
 
     test("Can Update Job By ID", async () => {
-        // new Date().toISOString().split("T")[0]
-        console.log(firstJob.date_posted.toISOString().split("T")[0])
-        console.log(firstJob)
         const res = await request(app).patch(`/api/jobs/${firstJob.id}`).send({
             id: firstJob.id,
             title: "Updated Title",

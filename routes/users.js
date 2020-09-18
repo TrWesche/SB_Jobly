@@ -19,7 +19,6 @@ router.post("/", async(req, res, next) => {
     try {
         const validate = jsonschema.validate(req.body, createSchema);
         if (!validate.valid) {
-            console.log("Not Valid")
             //Collect all the errors in an array and throw
             const listOfErrors = validate.errors.map(e => e.stack);
             throw new ExpressError(`Unable to create a new User: ${listOfErrors}`, 400)

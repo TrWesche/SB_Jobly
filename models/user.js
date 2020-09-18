@@ -17,7 +17,6 @@ class User {
     // ╚═══╝╚╝╚═╝╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
               
     static async new(bodyParams) {
-        console.log(bodyParams)
         const hashedPassword = await bcrypt.hash(bodyParams.password, BCRYPT_WORK_FACTOR)
         const result = await db.query(`
             INSERT INTO users (username, password, first_name, last_name, email, photo_url, is_admin)
@@ -60,7 +59,16 @@ class User {
     // ╚═══╝╚╝   ╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
 
     static async update(username, updateItems) {
-        const { query, values } = sqlForPartialUpdate("users", updateItems, "username", username);
+        let processedItems = {};
+        for (let item in updateItems) {
+            if (item === "password") {
+                processedItems[item] = await bcrypt.hash(updateItems.password, BCRYPT_WORK_FACTOR);
+            } else {
+                processedItems[item] = updateItems[item];
+            }
+        }
+
+        const { query, values } = sqlForPartialUpdate("users", processedItems, "username", username);
         const result = await db.query(query, values);
         const returnObj = {
             username: result.rows[0].username,
