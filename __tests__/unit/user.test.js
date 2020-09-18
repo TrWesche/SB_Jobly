@@ -134,7 +134,18 @@ describe("Test User class", () => {
         const result = await User.delete(testUser.username);
         expect(result.username).toBe(testUser.username);
     })
+
+
+    // ╔═══╗╔╗ ╔╗╔════╗╔╗ ╔╗╔═══╗╔═╗ ╔╗╔════╗╔══╗╔═══╗╔═══╗╔════╗╔═══╗
+    // ║╔═╗║║║ ║║║╔╗╔╗║║║ ║║║╔══╝║║╚╗║║║╔╗╔╗║╚╣╠╝║╔═╗║║╔═╗║║╔╗╔╗║║╔══╝
+    // ║║ ║║║║ ║║╚╝║║╚╝║╚═╝║║╚══╗║╔╗╚╝║╚╝║║╚╝ ║║ ║║ ╚╝║║ ║║╚╝║║╚╝║╚══╗
+    // ║╚═╝║║║ ║║  ║║  ║╔═╗║║╔══╝║║╚╗║║  ║║   ║║ ║║ ╔╗║╚═╝║  ║║  ║╔══╝
+    // ║╔═╗║║╚═╝║ ╔╝╚╗ ║║ ║║║╚══╗║║ ║║║ ╔╝╚╗ ╔╣╠╗║╚═╝║║╔═╗║ ╔╝╚╗ ║╚══╗
+    // ╚╝ ╚╝╚═══╝ ╚══╝ ╚╝ ╚╝╚═══╝╚╝ ╚═╝ ╚══╝ ╚══╝╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
+
+    test("Can Authenticate User", async() => {
+        const result = await User.authenticate({username: testUser.username, password: testUser.password});
+        expect(result.username).toBe(testUser.username);
+        expect(result.is_admin).toBe(testUser.is_admin);
+    })
 })
-
-
-  
