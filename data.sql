@@ -24,3 +24,11 @@ CREATE TABLE users (
     photo_url text,
     is_admin boolean NOT NULL DEFAULT false
 );
+
+CREATE TABLE applications (
+    username text REFERENCES users ON DELETE CASCADE,
+    job_id integer REFERENCES jobs ON DELETE CASCADE,
+    state text NOT NULL,
+    created_at timestamp with time zone,
+    PRIMARY KEY (username, job_id)
+);
