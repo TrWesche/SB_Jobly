@@ -1,14 +1,17 @@
 /** Express app for jobly. */
 
 const express = require("express");
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 
 const ExpressError = require("./helpers/expressError");
-
-const morgan = require("morgan");
-
 const app = express();
 
+const { authenticateJWT } = require("./middleware/auth")
+
 app.use(express.json());
+app.use(cookieParser());
+app.use(authenticateJWT);
 
 // add logging system
 app.use(morgan("tiny"));

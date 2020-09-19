@@ -99,22 +99,19 @@ class User {
     }
 
 
-    // ╔═══╗╔═══╗╔═══╗  
-    // ║╔═╗║╚╗╔╗║╚╗╔╗║  
-    // ║║ ║║ ║║║║ ║║║║  
-    // ║╚═╝║ ║║║║ ║║║║  
-    // ║╔═╗║╔╝╚╝║╔╝╚╝║╔╗
-    // ╚╝ ╚╝╚═══╝╚═══╝╚╝
-    
-    // AUTHENTICATE
+    // ╔═══╗╔╗ ╔╗╔════╗╔╗ ╔╗╔═══╗╔═╗ ╔╗╔════╗╔══╗╔═══╗╔═══╗╔════╗╔═══╗
+    // ║╔═╗║║║ ║║║╔╗╔╗║║║ ║║║╔══╝║║╚╗║║║╔╗╔╗║╚╣╠╝║╔═╗║║╔═╗║║╔╗╔╗║║╔══╝
+    // ║║ ║║║║ ║║╚╝║║╚╝║╚═╝║║╚══╗║╔╗╚╝║╚╝║║╚╝ ║║ ║║ ╚╝║║ ║║╚╝║║╚╝║╚══╗
+    // ║╚═╝║║║ ║║  ║║  ║╔═╗║║╔══╝║║╚╗║║  ║║   ║║ ║║ ╔╗║╚═╝║  ║║  ║╔══╝
+    // ║╔═╗║║╚═╝║ ╔╝╚╗ ║║ ║║║╚══╗║║ ║║║ ╔╝╚╗ ╔╣╠╗║╚═╝║║╔═╗║ ╔╝╚╗ ║╚══╗
+    // ╚╝ ╚╝╚═══╝ ╚══╝ ╚╝ ╚╝╚═══╝╚╝ ╚═╝ ╚══╝ ╚══╝╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
+                                                                   
     static async authenticate(bodyParams) {
         const result = await db.query(`
             SELECT username, password, is_admin
             FROM users
             WHERE username = $1`,
             [bodyParams.username]);
-    
-        console.log(result.rows[0]);
 
         if (result.rows[0]) {
             const dbPassword = result.rows[0].password;
@@ -124,7 +121,7 @@ class User {
                 return {username: result.rows[0].username, is_admin: result.rows[0].is_admin}
             }
         }
-
+        
         return false
     }
 }

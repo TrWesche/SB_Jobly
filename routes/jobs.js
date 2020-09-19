@@ -4,12 +4,32 @@ const Job = require("../models/job")
 const jsonschema = require("jsonschema");
 const searchSchema = require("../schemas/jobSearch.json");
 const createSchema = require("../schemas/jobNew.json");
-const updateSchema = require("../schemas/jobUpdate.json")
+const updateSchema = require("../schemas/jobUpdate.json");
+const { ensureLoggedIn, ensureIsAdmin } = require("../middleware/auth");
 
 const router = new express.Router()
 
 
-router.get("/", async (req, res, next) => {
+router.post("/", ensureIsAdmin, async(req, res, next) => {
+    try {
+        const validate = jsonschema.validate(req.body, createSchema);
+        if (!validate.valid) {
+            //Collect all the errors in an array and throw
+            const listOfErrors = validate.errors.map(e => e.stack);
+            throw new ExpressError(`Unable to create a new Job: ${listOfErrors}`, 400)
+        }
+
+        const queryData = await Job.new(req.body);
+        return res.json({job: queryData})
+    } catch (error) {
+        // if (error.code === '23505') {
+        //     return next(new ExpressError(`Unable to create a new Job: Handle Already Exists`, 400))
+        // }
+        return next(error)
+    }
+})
+
+router.get("/", ensureLoggedIn, async (req, res, next) => {
     try {
         let queryData;
         // Check for query params validity
@@ -30,26 +50,7 @@ router.get("/", async (req, res, next) => {
     }  
 })
 
-router.post("/", async(req, res, next) => {
-    try {
-        const validate = jsonschema.validate(req.body, createSchema);
-        if (!validate.valid) {
-            //Collect all the errors in an array and throw
-            const listOfErrors = validate.errors.map(e => e.stack);
-            throw new ExpressError(`Unable to create a new Job: ${listOfErrors}`, 400)
-        }
-
-        const queryData = await Job.new(req.body);
-        return res.json({job: queryData})
-    } catch (error) {
-        // if (error.code === '23505') {
-        //     return next(new ExpressError(`Unable to create a new Job: Handle Already Exists`, 400))
-        // }
-        return next(error)
-    }
-})
-
-router.get("/:id", async(req, res, next) => {
+router.get("/:id", ensureLoggedIn, async(req, res, next) => {
     try {
         const queryData = await Job.getComp(req.params.id);
 
@@ -59,7 +60,7 @@ router.get("/:id", async(req, res, next) => {
     }
 })
 
-router.patch("/:id", async(req, res, next) => {
+router.patch("/:id", ensureIsAdmin, async(req, res, next) => {
     try {
         // Validate job handle
         const oldData = await Job.get(req.params.id);
@@ -96,7 +97,7 @@ router.patch("/:id", async(req, res, next) => {
     }
 })
 
-router.delete("/:id", async(req, res, next) => {
+router.delete("/:id", ensureIsAdmin, async(req, res, next) => {
     try {
         const queryData = await Job.delete(req.params.id);
         if (!queryData) {

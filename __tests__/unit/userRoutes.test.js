@@ -6,32 +6,21 @@ const app = require("../../app");
 const db = require("../../db");
 const User = require("../../models/user");
 
-let testUser = {
-    username: "TestMaster",
-    password: "password",
-    first_name: "Master",
-    last_name: "Test",
-    email: "masterT@test.com",
-    photo_url: "http://testimageplace.com/123xyz",
-    is_admin: true
-};
+const { TEST_DATA, performAfterAll } = require("./jest.config")
 
-let otherUser = {
-    username: "LittleTesty",
-    password: "password",
-    first_name: "Testy",
-    last_name: "Little",
-    email: "LTesty@test.com",
-    photo_url: "http://testimageplace.com/abcd1234",
-    is_admin: false
-};
+let dynamicUser;
+let dynamicUserToken;
 
+let staticUser;
 let createUser;
 
 beforeEach(async function () {
     await db.query("DELETE FROM users");
-    await User.new(testUser);
-    await User.new(otherUser);
+    dynamicUser = TEST_DATA.testUserDynamic;
+    staticUser = TEST_DATA.testUserStatic;
+
+    dynamicUserToken = await request(app).post('/api/users').send(dynamicUser);
+    await User.new(staticUser);
 
     createUser = {
         username: "ItsaMeNewUser",
@@ -45,7 +34,7 @@ beforeEach(async function () {
 });
 
 afterAll(async function() {
-    await db.end();
+    await performAfterAll();
 });
 
 
@@ -116,16 +105,16 @@ describe("GET /api/users", () => {
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({users: [
             {
-                username: testUser.username,
-                first_name: testUser.first_name,
-                last_name: testUser.last_name,
-                email: testUser.email
+                username: staticUser.username,
+                first_name: staticUser.first_name,
+                last_name: staticUser.last_name,
+                email: staticUser.email
             },
             {
-                username: otherUser.username,
-                first_name: otherUser.first_name,
-                last_name: otherUser.last_name,
-                email: otherUser.email
+                username: dynamicUser.username,
+                first_name: dynamicUser.first_name,
+                last_name: dynamicUser.last_name,
+                email: dynamicUser.email
             }
         ]});
     })
@@ -135,15 +124,15 @@ describe("GET /api/users", () => {
 describe("GET /api/users/:username", () => {
 
     test("Can Get One User By Username", async () => {
-        const res = await request(app).get(`/api/users/${testUser.username}`);
+        const res = await request(app).get(`/api/users/${dynamicUser.username}`);
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({user:
             {
-                username: testUser.username,
-                first_name: testUser.first_name,
-                last_name: testUser.last_name,
-                email: testUser.email,
-                photo_url: testUser.photo_url
+                username: dynamicUser.username,
+                first_name: dynamicUser.first_name,
+                last_name: dynamicUser.last_name,
+                email: dynamicUser.email,
+                photo_url: dynamicUser.photo_url
             }
         });
     })
@@ -161,33 +150,37 @@ describe("GET /api/users/:username", () => {
 describe("PATCH /api/users/:username", () => {
 
     test("Can Update User By Username", async () => {
-        testUser.first_name = "MrUpdate";
+        dynamicUser.first_name = "MrUpdate";
+        dynamicUser.token = dynamicUserToken.body.token;
 
-        const res = await request(app).patch(`/api/users/${testUser.username}`).send(testUser);
+        const res = await request(app).patch(`/api/users/${dynamicUser.username}`).send(dynamicUser);
 
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({user: 
             {
-                username: testUser.username,
-                first_name: testUser.first_name,
-                last_name: testUser.last_name,
-                email: testUser.email,
-                photo_url: testUser.photo_url
+                username: dynamicUser.username,
+                first_name: dynamicUser.first_name,
+                last_name: dynamicUser.last_name,
+                email: dynamicUser.email,
+                photo_url: dynamicUser.photo_url
             }
         })
     })
 
-    test("Fails on invalid User Username", async () => {
-        const res = await request(app).patch(`/api/users/BADUSERNAME`).send(testUser);
-        expect(res.statusCode).toBe(400);
+    test("Fails on missing User Token", async() => {
+        dynamicUser.first_name = "MrUpdate";
+        const res = await request(app).patch(`/api/users/${dynamicUser.username}`);
+
+        expect(res.statusCode).toBe(401);
     })
 
-    test("Fails Validation on Incorrect Parameter Type", async () => {
-        testUser.first_name = 123456789
-
-        const res = await request(app).patch(`/api/users/${testUser.username}`).send(testUser);
-        expect(res.statusCode).toBe(400);
-    });
+    test("Fails on username mismatch", async() => {
+        staticUser.token = dynamicUserToken.body.token;
+        staticUser.first_name = "SomeonesTampering";
+        
+        const res = await request(app).patch(`/api/users/${staticUser.username}`).send(staticUser);
+        expect(res.statusCode).toBe(401);
+    })
 });
 
 
@@ -200,12 +193,17 @@ describe("PATCH /api/users/:username", () => {
 
 describe("DELETE /api/users/:username", () => {
     test("Can Delete User By Username", async () => {
-        const res = await request(app).delete(`/api/users/${testUser.username}`)
+        const res = await request(app).delete(`/api/users/${dynamicUser.username}`).send({token: dynamicUserToken.body.token});
         expect(res.statusCode).toBe(200);
     });
 
-    test("Fails to Delete on Bad Username", async () => {
-        const res = await request(app).delete(`/api/users/BADUSERNAME`);
-        expect(res.statusCode).toBe(404);
-    })
+    test("Fails on missing token", async() => {
+        const res = await request(app).delete(`/api/users/${dynamicUser.username}`);
+        expect(res.statusCode).toBe(401);
+    });
+
+    test("Fails on username mismatch", async() => {
+        const res = await request(app).delete(`/api/users/${staticUser.username}`).send({token: dynamicUserToken.body.token});
+        expect(res.statusCode).toBe(401);
+    });
 })

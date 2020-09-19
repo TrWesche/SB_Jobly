@@ -4,12 +4,32 @@ const Company = require("../models/company");
 const jsonschema = require("jsonschema");
 const searchSchema = require("../schemas/companySearch.json");
 const createSchema = require("../schemas/companyNew.json");
-const updateSchema = require("../schemas/companyUpdate.json")
+const updateSchema = require("../schemas/companyUpdate.json");
+const { ensureLoggedIn, ensureIsAdmin } = require("../middleware/auth");
 
 const router = new express.Router()
 
 
-router.get("/", async (req, res, next) => {
+router.post("/", ensureIsAdmin, async(req, res, next) => {
+    try {
+        const validate = jsonschema.validate(req.body, createSchema);
+        if (!validate.valid) {
+            //Collect all the errors in an array and throw
+            const listOfErrors = validate.errors.map(e => e.stack);
+            throw new ExpressError(`Unable to create a new Company: ${listOfErrors}`, 400)
+        }
+
+        const companyData = await Company.new(req.body);
+        return res.json({company: companyData})
+    } catch (error) {
+        if (error.code === '23505') {
+            return next(new ExpressError(`Unable to create a new Company: Handle Already Exists`, 400))
+        }
+        return next(error)
+    }
+})
+
+router.get("/", ensureLoggedIn, async (req, res, next) => {
     try {
         let companyData;
         // Check for query params validity
@@ -30,26 +50,8 @@ router.get("/", async (req, res, next) => {
     }  
 })
 
-router.post("/", async(req, res, next) => {
-    try {
-        const validate = jsonschema.validate(req.body, createSchema);
-        if (!validate.valid) {
-            //Collect all the errors in an array and throw
-            const listOfErrors = validate.errors.map(e => e.stack);
-            throw new ExpressError(`Unable to create a new Company: ${listOfErrors}`, 400)
-        }
 
-        const companyData = await Company.new(req.body);
-        return res.json({company: companyData})
-    } catch (error) {
-        if (error.code === '23505') {
-            return next(new ExpressError(`Unable to create a new Company: Handle Already Exists`, 400))
-        }
-        return next(error)
-    }
-})
-
-router.get("/:handle", async(req, res, next) => {
+router.get("/:handle", ensureLoggedIn, async(req, res, next) => {
     try {
         const companyData = await Company.getJobs(req.params.handle);
 
@@ -59,7 +61,7 @@ router.get("/:handle", async(req, res, next) => {
     }
 })
 
-router.patch("/:handle", async(req, res, next) => {
+router.patch("/:handle", ensureIsAdmin, async(req, res, next) => {
     try {
         // Validate company handle
         const oldData = await Company.get(req.params.handle);
@@ -96,7 +98,7 @@ router.patch("/:handle", async(req, res, next) => {
     }
 })
 
-router.delete("/:handle", async(req, res, next) => {
+router.delete("/:handle", ensureIsAdmin, async(req, res, next) => {
     try {
         const companyHandle = await Company.delete(req.params.handle);
         if (!companyHandle) {

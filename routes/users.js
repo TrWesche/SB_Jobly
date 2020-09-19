@@ -7,6 +7,7 @@ const User = require("../models/user");
 const jsonschema = require("jsonschema");
 const createSchema = require("../schemas/userNew.json");
 const updateSchema = require("../schemas/userUpdate.json")
+const { ensureCorrectUser } = require("../middleware/auth");
 
 const router = new express.Router()
 
@@ -31,7 +32,6 @@ router.post("/", async(req, res, next) => {
 
         // Return JSON Web Token
         const token = jwt.sign(queryData, SECRET_KEY);
-        console.log(token.username)
         res.cookie("uvert", token, {httpOnly: true})
         return res.json({ "token": token })
 
@@ -81,7 +81,7 @@ router.get("/:username", async(req, res, next) => {
 // ║╚═╝║║║   ╔╝╚╝║║╔═╗║ ╔╝╚╗ ║╚══╗
 // ╚═══╝╚╝   ╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
 
-router.patch("/:username", async(req, res, next) => {
+router.patch("/:username", ensureCorrectUser, async(req, res, next) => {
     try {
         // Validate user username
         const oldData = await User.get(req.params.username);
@@ -126,7 +126,7 @@ router.patch("/:username", async(req, res, next) => {
 // ╔╝╚╝║║╚══╗║╚═╝║║╚══╗ ╔╝╚╗ ║╚══╗
 // ╚═══╝╚═══╝╚═══╝╚═══╝ ╚══╝ ╚═══╝
 
-router.delete("/:username", async(req, res, next) => {
+router.delete("/:username", ensureCorrectUser, async(req, res, next) => {
     try {
         const queryData = await User.delete(req.params.username);
         if (!queryData) {
