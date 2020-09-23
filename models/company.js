@@ -8,6 +8,8 @@ const db = require("../db")
 class Company {
 
     static async all(queryParams) {
+
+        // Negative logic => switch all & query params
         if (queryParams) {
             let idx = 1;
             let searchTerms = [];

@@ -17,13 +17,14 @@ class User {
     // ╚═══╝╚╝╚═╝╚═══╝╚╝ ╚╝ ╚══╝ ╚═══╝
               
     static async new(bodyParams) {
-        const hashedPassword = await bcrypt.hash(bodyParams.password, BCRYPT_WORK_FACTOR)
+        const hashedPassword = await bcrypt.hash(bodyParams.password, BCRYPT_WORK_FACTOR);
+        const is_admin = bodyParams.is_admin ? bodyParams.is_admin : false;
         const result = await db.query(`
             INSERT INTO users (username, password, first_name, last_name, email, photo_url, is_admin)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING username, is_admin`,
             // RETURNING username, password, first_name, last_name, email, photo_url, is_admin,
-            [bodyParams.username, hashedPassword, bodyParams.first_name, bodyParams.last_name, bodyParams.email, bodyParams.photo_url, bodyParams.is_admin]);
+            [bodyParams.username, hashedPassword, bodyParams.first_name, bodyParams.last_name, bodyParams.email, bodyParams.photo_url, is_admin]);
         return result.rows[0]
     }
 

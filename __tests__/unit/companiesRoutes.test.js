@@ -133,6 +133,8 @@ describe("GET /api/companies", () => {
         expect(res.statusCode).toBe(400);;
     });
 
+    // Add successful test cases for employee counts
+    // Add test for search for company by name
 });
 
 

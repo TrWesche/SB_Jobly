@@ -22,7 +22,7 @@ CREATE TABLE users (
     last_name text NOT NULL,
     email text UNIQUE NOT NULL,
     photo_url text,
-    is_admin boolean NOT NULL DEFAULT false
+    is_admin boolean NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE applications (

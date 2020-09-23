@@ -63,6 +63,8 @@ router.get("/:handle", ensureLoggedIn, async(req, res, next) => {
 
 router.patch("/:handle", ensureIsAdmin, async(req, res, next) => {
     try {
+        // TODO: Move repetitive validations to middleware
+
         // Validate company handle
         const oldData = await Company.get(req.params.handle);
         if (!oldData) {

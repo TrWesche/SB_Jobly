@@ -1,5 +1,7 @@
 const db = require("../../db");
 
+// Useful for splititng up db level authentication & storing static data
+
 const TEST_DATA = {
     testUserStatic: {
         username: "staticUser",
